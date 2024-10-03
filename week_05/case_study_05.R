@@ -1,20 +1,11 @@
----
-title: "Case Study 05"
-author: Stephen Sanders
-date: 9/28/2024
-output: github_document
----
-```{r libraries, message = FALSE}
+# import libraries
 library(tidyverse)
 library(sf)
 library(spData)
 library(ggplot2)
 library(leaflet)
 library(units)
-```
 
-## Load the data (world & us_states)
-```{r data}
 # load world and us_states data from spData
 data(world)
 data(us_states)
@@ -22,10 +13,7 @@ data(us_states)
 # show data sets
 plot(world[1])
 plot(us_states[1])
-```
 
-## Isolate Canada and NYS boundaries, reproject them to Albers Equal Area, then determine 10km buffer around Canada border
-```{r processing}
 # set albers equal area projection string
 albers="+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
 
@@ -44,10 +32,7 @@ canada_buffer <- st_buffer(canada, 10000)
 
 plot(st_geometry(canada_buffer))
 plot(nys, add = TRUE)
-```
 
-## Determine NYS 10km border area, then map this area over state boundary using ggplot2
-```{r intersection_plot}
 # see where NYS intersects with Canada border buffer
 border_intersection <- st_intersection(nys, canada_buffer)
 
@@ -57,9 +42,9 @@ intersection_area <- st_area(border_intersection) %>% set_units(km^2)
 #### => Intersection area is 3,495 km^2
 
 # plot NYS and its land area that is within 10km of Canadian border
-ggplot() +
-  geom_sf(data = nys) +
-  geom_sf(data = border_intersection, aes(fill = 'red')) +
+ggplot(border_intersection) +
+  geom_sf(data = nys, fill = 'gray') +
+  geom_sf(fill = 'red') +
   labs(
     title = 'New York Land within 10km'
   ) +
@@ -67,11 +52,7 @@ ggplot() +
     legend.position = 'none',
     plot.title = element_text(hjust = 0.5, size = 20)
   )
-```
-The 10km intersection area in New York along its border with Canada is 3,495 km^2.
 
-## Plot 10km border area using Leaflet
-```{r leaflet}
 # transform border_intersection to WGS84 before adding to map (to remove warnings)
 m <- leaflet(border_intersection %>% st_transform(crs = '+proj=longlat +datum=WGS84')) %>%
   addTiles() %>%
@@ -82,6 +63,5 @@ m <- leaflet(border_intersection %>% st_transform(crs = '+proj=longlat +datum=WG
     weight = 1 # change stroke width of polygon boundaries to 1
   )
 
-# display map
+# display leaflet map
 m
-```
