@@ -57,9 +57,9 @@ intersection_area <- st_area(border_intersection) %>% set_units(km^2)
 #### => Intersection area is 3,495 km^2
 
 # plot NYS and its land area that is within 10km of Canadian border
-ggplot() +
-  geom_sf(data = nys) +
-  geom_sf(data = border_intersection, aes(fill = 'red')) +
+ggplot(border_intersection) +
+  geom_sf(data = nys, fill = 'gray') +
+  geom_sf(fill = 'red') +
   labs(
     title = 'New York Land within 10km'
   ) +
