@@ -33,6 +33,8 @@ world_clim <- terra::extract(tmean_max, world,
 geo <- st_transform(select(world_clim, c(geom)), crs = 4326)
 world_clim <- cbind(geo, world_clim) %>% select(-c(geom.1)) %>% st_transform(crs = 4326)
 
+world_clim
+
 # plot max temp by country
 ggplot(world_clim) +
   geom_sf(aes(fill = max)) +
