@@ -1,11 +1,15 @@
 ---
-title: "Case Study 08"
-author: Stephen Sanders
-date: 10/27/2024
-output: github_document
+title: "Mauna Loa Annual Carbon Dioxide Concentration (1959 - Present)"
+author: "Stephen Sanders"
+date: "10/27/2024"
+format:
+  html: default
+  pptx: default
+  docx: default
+  gfm: default
 ---
- 
- ```{r packages, results = 'hide', message = FALSE, echo = FALSE}
+
+```{r packages, results = 'hide', message = FALSE, echo = FALSE}
 # import necessary packages
 library(tidyverse)
 library(ggplot2)
