@@ -1,7 +1,49 @@
 ---
 title: "Case Study 12"
-author: Your Name
-date: August 1, 2020
+author: Stephen Sanders
+date: 11/21/2024
 output: github_document
 ---
- 
+
+```{r setup, echo=F, warning=F, message=T}
+# import libraries
+library(tidyverse)
+library(htmlwidgets)
+library(widgetframe)
+library(htmltools)
+library(xts)
+library(dygraphs)
+library(openmeteo)
+
+# get weather data for UB from the beginning of 2023 to the present
+temp_data <- weather_history(
+  c(43.00923265935055, -78.78494250958327),
+  start = "2023-01-01", end = today(),
+  daily = list("temperature_2m_max", "temperature_2m_min", "precipitation_sum")) %>% 
+  mutate(daily_temperature_2m_mean=(daily_temperature_2m_max+daily_temperature_2m_min) / 2)
+```
+
+```{r max_temp}
+# time series of max temp data
+max_temp_ts <- xts(x = temp_data$daily_temperature_2m_max, order.by = temp_data$date)
+
+# time series of precipitation
+precip_ts <- xts(x = temp_data$daily_precipitation_sum, order.by = temp_data$date)
+
+# create list of dygraph objects
+graphs <- list(
+  # create interactive graph of daily max temp in Buffalo, NY
+  dygraph(max_temp_ts, main = 'Daily Maximum Temperature in Buffalo, NY', group = 'buffalo') %>%
+    dySeries('V1', label = 'Max Temp') %>%
+    dyAxis(name = 'y', label = 'Max Temperature') %>%
+    dyRangeSelector(dateWindow = c('2023-01-01', '2024-10-31')),
+  # create interactive graph of daily precipitation in Buffalo, NY
+  dygraph(precip_ts, main = 'Daily Precipitation in Buffalo, NY', group = 'buffalo') %>%
+    dySeries('V1', label = 'Precipitation') %>%
+    dyAxis(name = 'y', label = 'Precipitation') %>%
+    dyRangeSelector(dateWindow = c('2023-01-01', '2024-10-31'))
+)
+
+# show dual synchronized graphs
+htmltools::browsable(htmltools::tagList(graphs))
+```
