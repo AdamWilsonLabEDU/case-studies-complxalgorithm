@@ -1,7 +1,68 @@
 ---
-title: "Case Study 11"
-author: Your Name
-date: August 1, 2020
+title: "Case Study 11: Parallel Computing with R"
+author: Stephen Sanders
+date: 11/27/2024
 output: github_document
 ---
- 
+
+```{r packages, echo=F, warning=F, message=T}
+# import libraries
+library(tidyverse)
+library(tidycensus)
+library(spData)
+library(sf)
+library(mapview)
+library(knitr)
+library(foreach)
+library(doParallel)
+
+registerDoParallel(4)
+getDoParWorkers() # check registered cores
+
+census_api_key("PUT KEY HERE")
+```
+
+```{r get_data, echo=T, warning=F, message=T}
+# set list of race related variables
+race_vars <- c(
+  "Total Population" = "P1_001N",
+  "White alone" = "P1_003N",
+  "Black or African American alone" = "P1_004N",
+  "American Indian and Alaska Native alone" = "P1_005N",
+  "Asian alone" = "P1_006N",
+  "Native Hawaiian and Other Pacific Islander alone" = "P1_007N",
+  "Some Other Race alone" = "P1_008N",
+  "Two or More Races" = "P1_009N"
+)
+
+# get block level racial data for Erie County, NY (and cache it)
+options(tigris_use_cache = TRUE)
+erie <- get_decennial(geography = "block", variables = race_vars, year = 2020,
+                  state = "NY", county = "Erie County", geometry = TRUE,
+                  sumfile = "pl", cache_table = TRUE)
+
+knitr::kable(head(erie), 'simple')
+```
+
+```{r analysis, warning=F}
+# set cropped extent
+box <- c(xmin=-78.9,xmax=-78.85,ymin=42.888,ymax=42.92)
+
+# crop erie county data to box
+buffalo <- erie %>% st_crop(box)
+
+# create random sample dots for each person residing in each block group
+buffalo_dots = foreach(i = unique(erie$variable), 
+                       .combine = rbind,
+                       .packages = c('tidyverse', 'sf')) %dopar% {
+  filter(buffalo, variable == i) %>%
+  st_sample(size = .$value) %>%
+  st_as_sf() %>%
+  mutate(variable = i)
+}
+```
+
+```{r mapview, echo=F, warning=F, fig.width=100%, fig.height=100%, cache=T}
+# view map of racial dots in extent
+mapview(buffalo_dots, zcol = 'variable', cex = 1, lwd = 0)
+```

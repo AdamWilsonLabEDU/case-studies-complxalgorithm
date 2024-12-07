@@ -1,0 +1,79 @@
+---
+title: "Mauna Loa Annual Carbon Dioxide Concentration (1959 - Present)"
+author: "Stephen Sanders"
+date: "10/27/2024"
+format:
+  html: default
+  pptx: default
+  docx: default
+  gfm: default
+---
+
+```{r packages, results = 'hide', message = FALSE, echo = FALSE}
+# import necessary packages
+library(tidyverse)
+library(ggplot2)
+library(gt)
+library(knitr)
+```
+
+Get annual mean CO2 concentration data measured at Mauna Loa from NOAA website
+
+```{r data, warning = FALSE, message = FALSE}
+# set url to annual co2 concentration data, then request it
+annual_data_url <- 'https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.txt'
+
+httr::GET(annual_data_url)
+
+# read in data to co2_annual then rename columns
+co2_annual <- read.table(annual_data_url, skip = 45, header = FALSE)
+co2_annual <- co2_annual %>%
+  rename(year = V1, mean = V2, unc = V3)
+
+# preview co2_annual
+knitr::kable(head(co2_annual))
+```
+
+Plot annual mean CO2 concentrations between 1959 and present
+
+```{r graph, warning = FALSE}
+# plot time series line graph of mean co2 concentration by year
+annual_co2_plt <- ggplot(co2_annual, aes(x = year, y = mean, color = 'darkred')) +
+  geom_line(linewidth = 2) +
+  xlab('Year') +
+  ylab('Mean CO2 level (ppm)') +
+  labs(title = 'Annual Mean CO2 Concentrations (1959 - Present)',
+       subtitle = 'Measurements from Mauna Loa',
+       caption = 'Data from NOAA Global Monitoring Laboratory') +
+  theme(
+    plot.title = element_text(size = unit(24, 'pt')),
+    plot.subtitle = element_text(size = unit(12, 'pt')),
+    legend.position = 'none'
+  )
+
+annual_co2_plt
+```
+
+Create table of mean CO2 concentrations by decade
+
+```{r table, warning = FALSE}
+# create table of mean co2 concentration by decade
+co2_table <- 
+  co2_annual %>%
+  mutate(decade = year - year %% 10) %>%
+  group_by(decade) %>%
+  summarize(decade_mean = mean(mean)) %>%
+  rename(mean = decade_mean) %>%
+  gt() %>%
+  tab_header(title = md('**Mean CO2 Levels by Decade**'),
+             subtitle = 'Measurements from Mauna Loa') %>%
+  cols_width(everything() ~ px(150)) %>%
+  cols_align(align = 'center', columns = everything()) %>%
+  cols_label(
+    decade = md('**Decade**'),
+    mean = md('**Mean CO2 (ppm)**')
+  ) %>%
+  fmt_number(columns = mean, decimals = 2)
+
+co2_table
+```
